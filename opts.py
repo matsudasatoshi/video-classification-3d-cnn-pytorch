@@ -19,6 +19,8 @@ def parse_opts():
     parser.add_argument('--verbose', action='store_true', help='')
     parser.set_defaults(verbose=False)
     parser.add_argument('--n_classes', default=400, type=int, help='same to model')
+    parser.add_argument('--switch_cuda', action='store_true',
+                        help='If your model calculated by cuda and now load with --no_cuda, set this arg.')
 
     args = parser.parse_args()
 

@@ -11,6 +11,17 @@ from model import generate_model
 from mean import get_mean
 from classify import classify_video
 
+#force dict keyname(remove initial chars "module.")
+from collections import OrderedDict
+def fix_model_state_dict(state_dict):
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        name = k
+        if name.startswith('module.'):
+            name = name[7:]  # remove 'module.' of dataparallel
+        new_state_dict[name] = v
+    return new_state_dict
+
 if __name__=="__main__":
     opt = parse_opts()
     opt.mean = get_mean()
@@ -21,9 +32,14 @@ if __name__=="__main__":
 
     model = generate_model(opt)
     print('loading model {}'.format(opt.model))
-    model_data = torch.load(opt.model)
+    if opt.switch_cuda:
+        model_data = torch.load(opt.model, map_location=torch.device('cpu'))
+        state_dict = fix_model_state_dict(model_data['state_dict'])
+    else:
+        model_data = torch.load(opt.model)
+        state_dict = model_data['state_dict']
     assert opt.arch == model_data['arch']
-    model.load_state_dict(model_data['state_dict'])
+    model.load_state_dict(state_dict)
     model.eval()
     if opt.verbose:
         print(model)
